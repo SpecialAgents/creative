@@ -1,4 +1,4 @@
-import { GoogleGenAI, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
 import { GenerationParams, PromptTemplate } from "../types";
 import { PROMPT_TEMPLATES } from "../constants";
 
@@ -15,6 +15,9 @@ const getModelForTask = (params: GenerationParams) => {
 const constructPrompt = (params: GenerationParams, template: PromptTemplate): string => {
   let prompt = `Write a ${params.length} ${template.name.toLowerCase()} in the ${params.genre} genre. `;
   
+  // Language Instruction
+  prompt += `The content MUST be written in ${params.language || 'English'}. `;
+
   if (params.tone) {
     prompt += `The tone should be ${params.tone}. `;
   }
@@ -83,4 +86,31 @@ export const generateCreativeContent = async (
     console.error("Gemini API Error:", error);
     throw new Error(error.message || "Failed to generate content.");
   }
+};
+
+export const generateSpeech = async (apiKey: string, text: string): Promise<string> => {
+  if (!apiKey) throw new Error("API Key is missing.");
+  
+  const ai = new GoogleGenAI({ apiKey });
+  
+  // Clean up markdown for better speech synthesis
+  const cleanText = text.replace(/[*_#`]/g, '');
+
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash-preview-tts',
+    contents: [{ parts: [{ text: cleanText }] }],
+    config: {
+      responseModalities: [Modality.AUDIO],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: { voiceName: 'Kore' },
+        },
+      },
+    },
+  });
+
+  const audioData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  if (!audioData) throw new Error("No audio data returned.");
+  
+  return audioData;
 };

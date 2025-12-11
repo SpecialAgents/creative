@@ -1,8 +1,22 @@
 import { PromptTemplate, SampleOutput, DocSection } from './types';
 
-export const GENRES = ['Fantasy', 'Sci-Fi', 'Mystery', 'Romance', 'Horror', 'Historical Fiction', 'Literary Fiction', 'Cyberpunk'];
-export const TONES = ['Dark', 'Humorous', 'Melancholic', 'Optimistic', 'Suspenseful', 'Whimsical', 'Gritty', 'Romantic'];
+export const GENRES = ['Fantasy', 'Sci-Fi', 'Mystery', 'Romance', 'Horror', 'Historical Fiction', 'Literary Fiction', 'Cyberpunk', 'Folklore'];
+export const TONES = ['Dark', 'Humorous', 'Melancholic', 'Optimistic', 'Suspenseful', 'Whimsical', 'Gritty', 'Romantic', 'Educational'];
 export const LENGTHS = ['short', 'medium', 'long'];
+
+export const SA_LANGUAGES = [
+  'English',
+  'isiZulu',
+  'isiXhosa',
+  'Afrikaans',
+  'Sepedi',
+  'Setswana',
+  'Sesotho',
+  'Xitsonga',
+  'siSwati',
+  'Tshivenda',
+  'isiNdebele'
+];
 
 export const PROMPT_TEMPLATES: PromptTemplate[] = [
   {
@@ -20,7 +34,7 @@ export const PROMPT_TEMPLATES: PromptTemplate[] = [
     name: 'Poetry',
     description: 'Compose evocative verse in various styles.',
     fields: [
-      { label: 'Poetic Style', key: 'style', type: 'select', options: ['Free Verse', 'Sonnet', 'Haiku', 'Limerick', 'Epic'] },
+      { label: 'Poetic Style', key: 'style', type: 'select', options: ['Free Verse', 'Sonnet', 'Haiku', 'Limerick', 'Epic', 'Praise Poem (Izibongo)'] },
       { label: 'Theme', key: 'theme', type: 'text', placeholder: 'e.g., The passage of time' }
     ]
   },
@@ -90,83 +104,124 @@ export const SAMPLE_OUTPUTS: SampleOutput[] = [
 
 export const TECHNICAL_DOCS: DocSection[] = [
   {
-    title: "1. Architecture",
+    title: "1. Executive Summary",
     content: `
-### System Overview
-PenPal AI is a Single Page Application (SPA) built with **React 18** and **TypeScript**. It utilizes a client-side architecture where all logic, including API orchestration, happens within the user's browser.
+## Project Overview
+**PenPal AI** is a state-of-the-art creative writing suite designed to democratize access to advanced generative AI. It serves as a co-pilot for authors, role-players, and world-builders, leveraging the multimodal capabilities of the Google Gemini API. The application provides a seamless, distraction-free environment for generating diverse content types, including narratives, poetry, character profiles, and dialogue systems.
 
-### Key Components
-1.  **UI Layer**:
-    *   **Tailwind CSS**: Used for rapid, utility-first styling. Ensures responsive design and consistent theming.
-    *   **Lucide React**: Provides lightweight, consistent SVG icons.
-    *   **Recharts**: Used for visualizing performance metrics (latency, token usage).
-2.  **Logic Layer**:
-    *   **Custom Hooks**: \`useGenerator\` manages the state machine of the generation process (idle, loading, streaming, complete, error).
-    *   **Service Layer**: \`geminiService.ts\` acts as a facade for the \`@google/genai\` SDK, handling authentication, model selection, and error normalization.
-3.  **Data Persistence**:
-    *   **Local Storage**: User history and preferences are persisted in the browser's \`localStorage\`, ensuring privacy and data retention across sessions without a backend database.
+## Key Objectives
+1.  **Accessibility**: Remove the barrier to entry for prompting complex LLMs by providing structured, intuitive templates.
+2.  **Performance**: Utilize 'Flash' models for low-latency ideation and 'Pro' models for complex reasoning.
+3.  **Privacy**: Implement a client-side-first architecture where user history is stored locally.
 
-### Data Flow
-1.  User selects a template and fills inputs.
-2.  Frontend validates inputs against defined schemas.
-3.  Request is sent to \`geminiService\`.
-4.  \`GoogleGenAI\` SDK streams response chunks.
-5.  React state updates progressively to show typing effect.
-6.  Final metrics are calculated and stored.
+## Technology Stack
+*   **Core Framework**: React 18 with TypeScript.
+*   **Styling**: Tailwind CSS for utility-first, responsive design with Dark Mode support.
+*   **AI Engine**: Google GenAI SDK (Gemini 2.5 Flash & Gemini 3.0 Pro).
+*   **Visualization**: Recharts for performance analytics.
+*   **Routing**: React Router DOM (HashRouter) for SPA navigation.
 `
   },
   {
-    title: "2. API Choice & Prompt Engineering",
+    title: "2. System Architecture",
     content: `
-### API Choice: Google Gemini API
-We selected the Gemini API for three primary reasons:
-1.  **Context Window**: The large context window allows for coherent long-form storytelling and maintaining consistency in worldbuilding tasks.
-2.  **Speed/Cost Balance**: \`gemini-2.5-flash\` offers exceptional latency for real-time interaction, crucial for a "flow-state" writing tool.
-3.  **Reasoning Capabilities**: \`gemini-3-pro-preview\` is utilized for complex tasks requiring logic, such as ensuring plot holes are filled or constructing consistent magic systems.
+## Client-Side Architecture
+PenPal AI operates as a **Single Page Application (SPA)**. This architectural choice minimizes server costs and latency, as the application logic resides entirely within the user's browser after the initial load.
 
-### Prompt Engineering Methodology
-We employ a **Structured Template Injection** method.
+### Component Hierarchy
+The application is structured around a central \`LayoutShell\` that manages global state (Theme, History) and navigation.
+*   **App**: Root entry point, handles routing and LocalStorage synchronization.
+*   **Generator**: The core workhorse. Manages the "Prompt Engineering" layer, input validation, and streaming API responses.
+*   **Stats**: A data visualization dashboard that aggregates user metrics (tokens/sec, genre distribution).
+*   **History**: A virtualized list view for managing past generations.
 
-**Base System Instruction**:
-> "You are an expert creative writing assistant. Your goal is to produce high-quality, evocative, and structurally sound content. Adhere strictly to the requested genre and tone."
+### State Management Strategy
+Instead of heavy state libraries (Redux/Zustand), the app utilizes React's native \`useState\` and \`useEffect\` hooks, combined with \`localStorage\` for persistence.
+*   **Volatile State**: Current input fields, loading states, streaming buffers.
+*   **Persisted State**: User history arrays, theme preference (Dark/Light).
 
-**Dynamic Template Construction**:
-Instead of generic prompts, we construct precise instructions:
-\`\`\`text
-Task: [Template Name]
-Genre: [User Genre]
-Tone: [User Tone]
-Constraints: Length=[User Length], Creativity=[User Temp]
-Specific Details:
-- [Field 1]: [Value 1]
-- [Field 2]: [Value 2]
+### Data Persistence
+Data is stored in the browser's \`localStorage\` under the key \`museai_history\`.
+*   **Limit Management**: The history is capped at 10 items to prevent \`localStorage\` quota exceedance (typically 5MB).
+*   **Structure**: JSON objects containing unique IDs, timestamps, content strings, and meta-parameters.
+`
+  },
+  {
+    title: "3. API Implementation Strategy",
+    content: `
+## Google Gemini Integration
+The core value proposition of PenPal AI is its sophisticated integration with the Google Gemini API.
+
+### Model Selection Logic
+We employ a dynamic routing strategy for model selection based on user intent:
+1.  **Gemini 2.5 Flash**: Selected for standard tasks (Short Stories, Dialogue).
+    *   *Rationale*: Extremely low Time-To-First-Token (TTFT) and high throughput.
+2.  **Gemini 3.0 Pro**: Selected for complex tasks (World Building, High Creativity > 0.8).
+    *   *Rationale*: Superior reasoning capabilities required for maintaining internal consistency in fictional worlds.
+
+### Structured Template Injection (STI)
+To ensure consistent quality, we do not send raw user inputs to the model. We utilize STI:
+1.  **Input Collection**: User fills specific form fields (e.g., "Protagonist", "Setting").
+2.  **Context Wrapping**: These inputs are injected into a rigid Markdown template.
+3.  **System Instruction**: A hidden system prompt defines the AI persona ("Expert Creative Writing Assistant") and enforces formatting rules.
+
+### Streaming Response Handling
+The application utilizes \`generateContentStream\`.
+*   **UX Impact**: The user perceives near-instant responsiveness as text generates character-by-character.
+*   **Technical Implementation**: An async iterator loop consumes chunks from the API and updates the React state in real-time.
+
+\`\`\`typescript
+for await (const chunk of responseStream) {
+  const text = chunk.text();
+  updateUI(text);
+}
 \`\`\`
-
-**Output Filtering**:
-While Gemini has built-in safety filters, we add explicit instructions in the system prompt to "Avoid clichés and ensure the content is appropriate for a general audience unless specified as 'Dark' or 'Gritty' tone."
 `
   },
   {
-    title: "3. Performance, Costs & Limits",
+    title: "4. Frontend Engineering",
     content: `
-### Performance Optimization
-*   **Streaming**: We strictly use \`generateContentStream\`. This reduces Time-To-First-Byte (TTFB) perception significantly. A user sees text appearing in ~400ms rather than waiting 5s for the full block.
-*   **Debouncing**: Input fields for parameters are debounced to prevent unnecessary state thrashing.
+## UI/UX Design Patterns
+The interface is built using **Glassmorphism** principles to create a modern, immersive aesthetic suitable for creative work.
+*   **Visual Stack**: Translucent backgrounds (\`bg-white/60\`), backdrop blurs (\`backdrop-blur-xl\`), and subtle borders.
+*   **Dark Mode**: A generic class-based toggle strategy that cascades via Tailwind's \`dark:\` prefix.
 
-### Rate Limits & Costs
-*   **Gemini 2.5 Flash**: 
-    *   **Cost**: Free of charge (within limits) or low cost per 1M tokens. 
-    *   **Rate Limits**: 15 RPM (Requests Per Minute) in the free tier; significantly higher in paid tiers.
-    *   **Context**: 1M token context window.
-*   **Gemini 3 Pro Preview**: 
-    *   **Cost**: Higher cost per token, typically reserved for complex reasoning tasks.
-    *   **Rate Limits**: 2 RPM in free tier; 60 RPM in paid.
-    
-### Limitation Management Strategies
-*   **Token Limits**: Client-side checks warn users if 'Long' length is selected for complex prompts.
-*   **Rate Limiting**: The app handles \`429\` errors with a user-friendly "Cooling down..." message and exponential backoff retry suggestions.
-*   **Quota Exhaustion**: If the API key quota is exceeded, the app provides a clear error message prompting the user to check their billing or switch keys.
-*   **Content Safety**: We utilize Gemini's default safety settings but handle blockages by prompting the user to refine their inputs if they trigger safety violations.
+## Input Validation & Sanitation
+To prevent wasted API calls and ensure prompt safety:
+*   **Gibberish Detection**: A heuristic algorithm analyzes vowel/consonant ratios to reject keyboard mashing.
+*   **Regex Validation**: Prevents purely numerical inputs or illegal characters in narrative fields.
+
+## Visualization Engine
+The \`Stats\` component parses the history array to generate insights:
+*   **Token Estimation**: Since the API returns raw text, we estimate token count using a character-ratio heuristic (approx 4 chars/token).
+*   **Latency Tracking**: We capture \`Date.now()\` deltas between request start and stream completion.
+`
+  },
+  {
+    title: "5. Security & Privacy",
+    content: `
+## API Key Security
+The application uses \`process.env.API_KEY\` injection.
+*   **Risk Mitigation**: In a production environment, this variable is injected at build time. The client never transmits the key to a third-party server, only directly to Google's endpoints.
+*   **Best Practice**: For a public deployment, a proxy server would be introduced to hide the key. Current architecture assumes a personal/local deployment or protected environment.
+
+## Content Safety
+We rely on Gemini's default safety filters (Harassment, Hate Speech, Sexually Explicit).
+*   **Error Handling**: If a prompt triggers a safety filter, the API throws a specific error which is caught and displayed as a user-friendly "Content Policy Violation" message, rather than crashing the app.
+`
+  },
+  {
+    title: "6. Future Roadmap",
+    content: `
+## Planned Features (v3.0)
+1.  **Export to PDF/ePub**: Native export for writers to publish directly.
+2.  **Multi-turn Conversations**: Allowing users to "chat" with the generated characters using the \`ChatSession\` API.
+3.  **Image Generation**: Integration of Imagen 3 to generate book covers or character portraits based on the text descriptions.
+4.  **Cloud Sync**: Optional Firebase integration to sync history across devices.
+
+## Optimization Targets
+*   **Caching**: Implement \`sessionStorage\` caching for identical prompts to save API costs.
+*   **Voice Input**: Utilization of the Web Speech API to allow dictation of prompts.
 `
   }
 ];

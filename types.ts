@@ -1,3 +1,4 @@
+
 export type ContentType = 'story' | 'poem' | 'character' | 'worldbuilding' | 'dialogue';
 
 export interface PromptTemplate {
@@ -17,6 +18,7 @@ export interface GenerationParams {
   type: ContentType;
   genre: string;
   tone: string;
+  language: string;
   length: 'short' | 'medium' | 'long';
   creativity: number; // 0 to 1 (Temperature)
   promptInputs: Record<string, string>;
