@@ -111,8 +111,9 @@ export const TECHNICAL_DOCS: DocSection[] = [
 
 ## Key Objectives
 1.  **Accessibility**: Remove the barrier to entry for prompting complex LLMs by providing structured, intuitive templates.
-2.  **Performance**: Utilize 'Flash' models for low-latency ideation and 'Pro' models for complex reasoning.
-3.  **Privacy**: Implement a client-side-first architecture where user history is stored locally.
+2.  **Inclusivity**: Full support for **11 official South African languages**, enabling localized storytelling and cultural preservation.
+3.  **Performance**: Utilize 'Flash' models for low-latency ideation and 'Pro' models for complex reasoning.
+4.  **Privacy**: Implement a client-side-first architecture where user history is stored locally.
 
 ## Technology Stack
 *   **Core Framework**: React 18 with TypeScript.
@@ -131,7 +132,7 @@ PenPal AI operates as a **Single Page Application (SPA)**. This architectural ch
 ### Component Hierarchy
 The application is structured around a central \`LayoutShell\` that manages global state (Theme, History) and navigation.
 *   **App**: Root entry point, handles routing and LocalStorage synchronization.
-*   **Generator**: The core workhorse. Manages the "Prompt Engineering" layer, input validation, and streaming API responses.
+*   **Generator**: The core workhorse. Manages the "Prompt Engineering" layer, input validation, language selection, and streaming API responses.
 *   **Stats**: A data visualization dashboard that aggregates user metrics (tokens/sec, genre distribution).
 *   **History**: A virtualized list view for managing past generations.
 
@@ -154,16 +155,17 @@ The core value proposition of PenPal AI is its sophisticated integration with th
 
 ### Model Selection Logic
 We employ a dynamic routing strategy for model selection based on user intent:
-1.  **Gemini 2.5 Flash**: Selected for standard tasks (Short Stories, Dialogue).
+1.  **Gemini 2.5 Flash** (\`gemini-2.5-flash\`): Selected for standard tasks (Short Stories, Dialogue).
     *   *Rationale*: Extremely low Time-To-First-Token (TTFT) and high throughput.
-2.  **Gemini 3.0 Pro**: Selected for complex tasks (World Building, High Creativity > 0.8).
+2.  **Gemini 3.0 Pro** (\`gemini-3-pro-preview\`): Selected for complex tasks (World Building, High Creativity > 0.8).
     *   *Rationale*: Superior reasoning capabilities required for maintaining internal consistency in fictional worlds.
 
-### Structured Template Injection (STI)
-To ensure consistent quality, we do not send raw user inputs to the model. We utilize STI:
+### Prompt Engineering & Localization
+To ensure consistent quality and support local languages, we utilize Structured Template Injection (STI):
 1.  **Input Collection**: User fills specific form fields (e.g., "Protagonist", "Setting").
-2.  **Context Wrapping**: These inputs are injected into a rigid Markdown template.
-3.  **System Instruction**: A hidden system prompt defines the AI persona ("Expert Creative Writing Assistant") and enforces formatting rules.
+2.  **Localization Layer**: A specific instruction \`The content MUST be written in {Language}\` is injected into the prompt context. This explicitly supports languages like **isiZulu**, **Afrikaans**, **Sesotho**, and others.
+3.  **Context Wrapping**: These inputs are injected into a rigid Markdown template.
+4.  **System Instruction**: A hidden system prompt defines the AI persona ("Expert Creative Writing Assistant") and enforces formatting rules.
 
 ### Streaming Response Handling
 The application utilizes \`generateContentStream\`.
@@ -171,9 +173,13 @@ The application utilizes \`generateContentStream\`.
 *   **Technical Implementation**: An async iterator loop consumes chunks from the API and updates the React state in real-time.
 
 \`\`\`typescript
-for await (const chunk of responseStream) {
-  const text = chunk.text();
-  updateUI(text);
+const response = await ai.models.generateContentStream({ model: '...', contents: ... });
+for await (const chunk of response) {
+  // Correctly accessing the text property from the chunk
+  const text = chunk.text; 
+  if (text) {
+      updateUI(text);
+  }
 }
 \`\`\`
 `
@@ -184,7 +190,13 @@ for await (const chunk of responseStream) {
 ## UI/UX Design Patterns
 The interface is built using **Glassmorphism** principles to create a modern, immersive aesthetic suitable for creative work.
 *   **Visual Stack**: Translucent backgrounds (\`bg-white/60\`), backdrop blurs (\`backdrop-blur-xl\`), and subtle borders.
+*   **Welcome Experience**: A dedicated landing page featuring a rich purple gradient and noise texture to evoke creativity and wonder.
 *   **Dark Mode**: A generic class-based toggle strategy that cascades via Tailwind's \`dark:\` prefix.
+
+## Document Generation Engine
+The application includes a specialized client-side document generator for this technical specification.
+*   **Implementation**: It constructs a MIME-compatible HTML blob with Microsoft Word-specific XML namespaces.
+*   **Export**: This allows users to download the full technical documentation (including this section) as a native \`.doc\` file without server-side processing.
 
 ## Input Validation & Sanitation
 To prevent wasted API calls and ensure prompt safety:
@@ -218,10 +230,7 @@ We rely on Gemini's default safety filters (Harassment, Hate Speech, Sexually Ex
 2.  **Multi-turn Conversations**: Allowing users to "chat" with the generated characters using the \`ChatSession\` API.
 3.  **Image Generation**: Integration of Imagen 3 to generate book covers or character portraits based on the text descriptions.
 4.  **Cloud Sync**: Optional Firebase integration to sync history across devices.
-
-## Optimization Targets
-*   **Caching**: Implement \`sessionStorage\` caching for identical prompts to save API costs.
-*   **Voice Input**: Utilization of the Web Speech API to allow dictation of prompts.
+5.  **Voice Input**: Utilization of the Web Speech API to allow dictation of prompts.
 `
   }
 ];

@@ -7,16 +7,46 @@ import { Samples } from './components/Samples';
 import { History } from './components/History';
 import { Welcome } from './components/Welcome';
 import { GenerationResult } from './types';
-import { PenTool, BarChart2, Book, Layout, Github, Sun, Moon, Clock } from 'lucide-react';
+import { PenTool, BarChart2, Book, Layout, Github, Sun, Moon, Clock, Menu, X } from 'lucide-react';
 
 const MAX_HISTORY_ITEMS = 10;
 
-const NavLink: React.FC<{ to: string; icon: React.ReactNode; label: string }> = ({ to, icon, label }) => {
+interface NavLinkProps {
+    to: string;
+    icon: React.ReactNode;
+    label: string;
+    onClick?: () => void;
+    // New prop to handle different styling contexts (sidebar vs transparent drawer)
+    variant?: 'default' | 'drawer'; 
+}
+
+const NavLink: React.FC<NavLinkProps> = ({ to, icon, label, onClick, variant = 'default' }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
+  
+  if (variant === 'drawer') {
+      return (
+        <Link
+          to={to}
+          onClick={onClick}
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${
+            isActive 
+              ? 'bg-white/20 text-white shadow-lg shadow-black/10 border border-white/10' 
+              : 'text-white/70 hover:bg-white/10 hover:text-white'
+          }`}
+        >
+          <span className={`transition-transform duration-200 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
+            {icon}
+          </span>
+          {label}
+        </Link>
+      );
+  }
+
   return (
     <Link
       to={to}
+      onClick={onClick}
       className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
         isActive 
           ? 'bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 shadow-sm border border-indigo-500/10' 
@@ -41,6 +71,12 @@ interface LayoutProps {
 const LayoutShell: React.FC<LayoutProps> = ({ children, history, isDark, toggleTheme }) => {
     const location = useLocation();
     const isWelcomePage = location.pathname === '/';
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+    // Close menu when route changes
+    useEffect(() => {
+        setIsMobileMenuOpen(false);
+    }, [location.pathname]);
 
     if (isWelcomePage) {
         return <>{children}</>;
@@ -48,7 +84,7 @@ const LayoutShell: React.FC<LayoutProps> = ({ children, history, isDark, toggleT
 
     return (
         <div className="flex h-screen w-full">
-            {/* Sidebar */}
+            {/* Desktop Sidebar */}
             <aside className="w-72 hidden md:flex flex-col glass-panel border-r border-zinc-200/50 dark:border-white/5 z-20">
                 <div className="p-8 pb-6">
                     <Link to="/" className="flex items-center gap-3 text-indigo-600 dark:text-indigo-400 mb-1 hover:opacity-80 transition-opacity">
@@ -65,7 +101,7 @@ const LayoutShell: React.FC<LayoutProps> = ({ children, history, isDark, toggleT
                     <NavLink to="/history" icon={<Clock className="w-4 h-4"/>} label="History" />
                     <NavLink to="/samples" icon={<Github className="w-4 h-4"/>} label="Gallery" />
                     <NavLink to="/stats" icon={<BarChart2 className="w-4 h-4"/>} label="Analytics" />
-                    
+                  
                 </nav>
 
                 <div className="p-6 mt-auto">
@@ -93,19 +129,70 @@ const LayoutShell: React.FC<LayoutProps> = ({ children, history, isDark, toggleT
                 </div>
             </aside>
 
+            {/* Mobile Navigation Drawer */}
+            {isMobileMenuOpen && (
+                <div className="fixed inset-0 z-50 md:hidden">
+                    <div 
+                        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                    ></div>
+                    {/* Updated Drawer Styles: Purple Transparent */}
+                    <div className="absolute left-0 top-0 bottom-0 w-3/4 max-w-xs bg-indigo-950/90 backdrop-blur-xl border-r border-white/10 shadow-2xl animate-in slide-in-from-left duration-300 p-6 flex flex-col">
+                        <div className="flex justify-between items-center mb-8">
+                            <Link to="/" className="flex items-center gap-3 text-white">
+                                <PenTool className="w-6 h-6" />
+                                <h1 className="font-bold text-xl tracking-tight text-white">PenPal AI</h1>
+                            </Link>
+                            <button onClick={() => setIsMobileMenuOpen(false)} className="p-2 -mr-2 text-white/70 hover:text-white transition-colors">
+                                <X className="w-6 h-6" />
+                            </button>
+                        </div>
+                        
+                        <nav className="space-y-2 flex-1">
+                            <NavLink variant="drawer" to="/generate" icon={<Layout className="w-5 h-5"/>} label="Studio" onClick={() => setIsMobileMenuOpen(false)} />
+                            <NavLink variant="drawer" to="/history" icon={<Clock className="w-5 h-5"/>} label="History" onClick={() => setIsMobileMenuOpen(false)} />
+                            <NavLink variant="drawer" to="/samples" icon={<Github className="w-5 h-5"/>} label="Gallery" onClick={() => setIsMobileMenuOpen(false)} />
+                            <NavLink variant="drawer" to="/stats" icon={<BarChart2 className="w-5 h-5"/>} label="Analytics" onClick={() => setIsMobileMenuOpen(false)} />
+                            <NavLink variant="drawer" to="/docs" icon={<Book className="w-5 h-5"/>} label="Documentation" onClick={() => setIsMobileMenuOpen(false)} />
+                        </nav>
+
+                        <div className="mt-auto pt-6 border-t border-white/10">
+                             <button 
+                                onClick={() => {
+                                    toggleTheme();
+                                    setIsMobileMenuOpen(false);
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/80 bg-white/10 hover:bg-white/20 transition-colors"
+                            >
+                                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                                <span>{isDark ? 'Switch to Light' : 'Switch to Dark'}</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Main Content */}
-            <main className="flex-1 overflow-hidden flex flex-col relative">
-                 <header className="md:hidden h-16 glass-panel border-b border-zinc-200/50 dark:border-zinc-800/50 flex items-center px-4 justify-between z-20">
-                     <Link to="/" className="flex items-center gap-2">
-                        <PenTool className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <main className="flex-1 overflow-hidden flex flex-col relative bg-zinc-50/50 dark:bg-black/20">
+                 {/* Mobile Header */}
+                 <header className="md:hidden h-16 glass-panel border-b border-zinc-200/50 dark:border-zinc-800/50 flex items-center px-4 justify-between z-30 shrink-0">
+                     <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="p-2 -ml-2 rounded-lg text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        >
+                            <Menu className="w-6 h-6" />
+                        </button>
                         <span className="font-bold text-zinc-900 dark:text-white">PenPal AI</span>
-                     </Link>
-                     <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                        {isDark ? <Sun className="w-5 h-5 text-zinc-600 dark:text-zinc-300" /> : <Moon className="w-5 h-5 text-zinc-600" />}
-                     </button>
+                     </div>
+                     <div className="w-8 h-8 bg-indigo-500/10 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+                        <PenTool className="w-4 h-4" />
+                     </div>
                  </header>
-                 <div className="flex-1 overflow-auto p-4 md:p-8 scroll-smooth">
-                    <div className="max-w-7xl mx-auto h-full">
+
+                 {/* Content Scroll Area */}
+                 <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 lg:p-8 scroll-smooth w-full">
+                    <div className="max-w-7xl mx-auto h-full flex flex-col">
                         {children}
                     </div>
                  </div>
