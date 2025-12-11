@@ -153,7 +153,6 @@ const LayoutShell: React.FC<LayoutProps> = ({ children, history, isDark, toggleT
                             <NavLink variant="drawer" to="/history" icon={<Clock className="w-5 h-5"/>} label="History" onClick={() => setIsMobileMenuOpen(false)} />
                             <NavLink variant="drawer" to="/samples" icon={<Github className="w-5 h-5"/>} label="Gallery" onClick={() => setIsMobileMenuOpen(false)} />
                             <NavLink variant="drawer" to="/stats" icon={<BarChart2 className="w-5 h-5"/>} label="Analytics" onClick={() => setIsMobileMenuOpen(false)} />
-                            <NavLink variant="drawer" to="/docs" icon={<Book className="w-5 h-5"/>} label="Documentation" onClick={() => setIsMobileMenuOpen(false)} />
                         </nav>
 
                         <div className="mt-auto pt-6 border-t border-white/10">
